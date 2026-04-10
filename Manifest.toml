@@ -58,7 +58,7 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 version = "1.11.0"
 
 [[deps.Intsect]]
-deps = ["Bumper", "DataStructures", "EnumX", "InteractiveUtils", "Printf", "StaticArrays", "TestItems", "UnsafeArrays", "YAML"]
+deps = ["Bumper", "DataStructures", "EnumX", "InteractiveUtils", "Printf", "StaticArrays", "TestItemRunner", "TestItems", "UnsafeArrays", "YAML"]
 path = "."
 uuid = "34e19417-f492-4f7b-a0e0-4ee794aee443"
 version = "1.0.0"
