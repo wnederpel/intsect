@@ -563,9 +563,9 @@ function run_arena(;
     end
 
     # Play each intsect engine against the next one
-    for i in 1:(length(intsect_specs)-1)
+    for i in 1:(length(intsect_specs) - 1)
         older_intsect = intsect_specs[i]
-        newer_intsect = intsect_specs[i+1]
+        newer_intsect = intsect_specs[i + 1]
         faceoff(
             older_intsect,
             newer_intsect;
@@ -589,7 +589,7 @@ function run_arena(;
     end
     # And check if the new engine is better against the existing engines than the previous build
     if length(intsect_specs) > 1
-        runner_up_intsect = intsect_specs[end-1]
+        runner_up_intsect = intsect_specs[end - 1]
         for existing in existing_specs
             faceoff(
                 runner_up_intsect,

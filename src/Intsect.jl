@@ -20,6 +20,7 @@ export GameString
 export Action
 export HexSet
 export SuggestedActions
+export MoveOrderingStats
 
 # constants
 export GRID_SIZE
@@ -160,15 +161,15 @@ if Base.generating_output()
 end
 
 module Arenant
-using Intsect
-using YAML
+    using Intsect
+    using YAML
 
-export run_arena
-export inspect_game
-export play_one_match
+    export run_arena
+    export inspect_game
+    export play_one_match
 
-include("arenant/arenant.jl")
-include("arenant/inspect_game.jl")
+    include("arenant/arenant.jl")
+    include("arenant/inspect_game.jl")
 end
 
 export Arenant

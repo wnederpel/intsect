@@ -43,8 +43,6 @@ function get_best_move(board::Board; depth=5000, time_limit_s=10.0, debug=true):
     end
 
     nodes_processed = Ref(0)
-    alpha = Ref(-Inf32)
-    beta = Ref(Inf32)
 
     best_move, best_score = iterative_deepening(
         board, board.ply, timed_out, depth, nodes_processed, debug;
@@ -84,15 +82,16 @@ function iterative_deepening(
         sa_array[i] = SuggestedActions(Int32(-1) * ones(Int32, 20), board)
     end
 
-    killer_table = KillerTable()
+    killer_table = SuggestedActions[
+        SuggestedActions(Int32(-1) * ones(Int32, 5), board),
+        SuggestedActions(Int32(-1) * ones(Int32, 5), board),
+    ]
 
     @no_escape begin
         for depth in 1:iterative_deepening_depth
             debug && println("iterative deepening at depth $depth")
             debug && println("best, second best = $best_move, $second_best")
             extension_budget = depth ÷ 2
-
-            clear!(killer_table)
 
             buffer_idx = 1
 
@@ -146,7 +145,7 @@ function minimax(
     nodes_processed::Ref{Int},
     debug::Bool,
     pv_move::Int32,
-    killer_table::KillerTable;
+    killer_table::Vector{SuggestedActions};
     suggested_moves_array::Vector{SuggestedActions},
     alpha::Float32=-Inf32,
     beta::Float32=Inf32,
@@ -179,6 +178,7 @@ function minimax(
                 return stored_score
             end
         end
+        # This should be changed to a single hash move value
         add!(suggested_moves, stored_suggested_move)
     end
 
@@ -213,8 +213,7 @@ function minimax(
             move_buffer,
             pv_move,
             suggested_moves,
-            killer_table,
-            ply,
+            killer_table[board.current_color],
             good_moves_buffer,
             normal_moves_buffer,
             bad_moves_buffer,
@@ -224,46 +223,85 @@ function minimax(
 
         for i in 1:idx
             action_as_index = ordered_move_buffer[i]
+            action = Intsect.ALL_ACTIONS[action_as_index]
 
             do_action(board, action_as_index)
 
             nodes_processed[] += 1
 
             new_depth = depth - 1
-            # Here we can do search extensions, but the evaluation seems to jump between even and odd ply This needs to be compensated somehow
-            # Maybe this is a general problem with the evaluation at the moment..
-            returned_score = minimax(
-                board,
-                initial_ply,
-                timed_out,
-                new_depth,
-                initial_depth,
-                extension_budget,
-                buffer_idx + 1,
-                nodes_processed,
-                debug,
-                board.pv_store[1][steps_below_initial_ply + 2], # PV move to try first at next depth
-                killer_table;
-                alpha=-beta,
-                beta=-alpha,
-                suggested_moves_array=suggested_moves_array, # These are good moves the opp might be able to make
-                pv_node=pv_node && (i == 1),
-            )
-            score = -returned_score
+            # do_late_move_reduction = false
+            # Late move reduction, remove depth further if late in the move list and not interesting
+            do_late_move_reduction =
+                depth > 2 &&
+                i > 2 &&
+                (
+                    board.queen_pos_white < 0 ||
+                    board.queen_pos_black < 0 ||
+                    !Intsect.are_neighs(
+                        action.goal_loc,
+                        board.current_color == WHITE ? board.queen_pos_white :
+                        board.queen_pos_black,
+                    )
+                )
+            score = -Inf32
+            if do_late_move_reduction
+                # also try to do null move pruning here, assume move is bad and do more aggressive pruning, reset if necessary
+                further_reduced_depth = new_depth - Int(round(0.99 + log(depth) + log(i) / 3.14))
+                score =
+                    -1 * minimax(
+                        board,
+                        initial_ply,
+                        timed_out,
+                        further_reduced_depth,
+                        initial_depth,
+                        extension_budget,
+                        buffer_idx + 1,
+                        nodes_processed,
+                        debug,
+                        board.pv_store[1][steps_below_initial_ply + 2], # PV move to try first at next depth
+                        killer_table;
+                        alpha=-beta,
+                        beta=-alpha,
+                        suggested_moves_array=suggested_moves_array, # These are good moves the opp might be able to make
+                        pv_node=pv_node && (i == 1),
+                    )
+            end
+            if !do_late_move_reduction || score > alpha
+                score =
+                    -1 * minimax(
+                        board,
+                        initial_ply,
+                        timed_out,
+                        new_depth,
+                        initial_depth,
+                        extension_budget,
+                        buffer_idx + 1,
+                        nodes_processed,
+                        debug,
+                        board.pv_store[1][steps_below_initial_ply + 2], # PV move to try first at next depth
+                        killer_table;
+                        alpha=-beta,
+                        beta=-alpha,
+                        suggested_moves_array=suggested_moves_array, # These are good moves the opp might be able to make
+                        pv_node=pv_node && (i == 1),
+                    )
+            end
+
             undo(board)
 
             if score > score_at_depth || score_at_depth == -Inf32
                 score_at_depth = score
                 action_chosen_at_depth = action_as_index
 
-                if score_at_depth > alpha
+                if score_at_depth >= alpha
                     # This is a pv move
                     alpha = score_at_depth
 
                     board.pv_store[steps_below_initial_ply + 1][steps_below_initial_ply + 1] =
                         action_as_index
                     if final_lvl
-                        # Terminate PV — no children to copy from
+                        # Terminate PV - no children to copy from
                         if steps_below_initial_ply + 2 <= PV_STORE_SIZE
                             board.pv_store[steps_below_initial_ply + 1][steps_below_initial_ply + 2] = Int32(
                                 -1
@@ -281,9 +319,9 @@ function minimax(
             end
 
             if beta <= score_at_depth
-                # beta cut off 
+                # beta cut off
                 type = :lowerbound
-                store_killer!(killer_table, ply, action_as_index)
+                add!(killer_table[board.current_color], action_as_index)
                 break
             end
 
@@ -356,8 +394,7 @@ function order_moves!(
     move_buffer,
     last_best::Int32,
     suggested_moves::SuggestedActions,
-    killer_table::KillerTable,
-    ply::Int,
+    killer_table::SuggestedActions,
     good_moves_buffer,
     normal_moves_buffer,
     bad_moves_buffer,
@@ -374,9 +411,6 @@ function order_moves!(
     normal_moves_index = 0
     bad_moves_index = 0
 
-    # Ply for same-side killer (2 plies ago = same side to move)
-    same_side_ply = max(1, ply - 2)
-
     for move in 1:(board.action_index - 1)
         action_as_index = move_buffer[move]
         if action_as_index == last_best
@@ -385,15 +419,20 @@ function order_moves!(
         elseif contains(action_as_index, suggested_moves)
             suggested_moves_buffer[suggested_moves_index += 1] = action_as_index
 
-        elseif is_killer(killer_table, ply, action_as_index) ||
-            is_killer(killer_table, same_side_ply, action_as_index)
+        elseif contains(action_as_index, killer_table)
             killer_moves_buffer[killer_moves_index += 1] = action_as_index
 
         elseif action_type(action_as_index) == Move
             move = ALL_MOVEMENTS[action_as_index - MAX_PLACEMENT_INDEX]
             tile = get_tile_on_board(board, move.moving_loc)
             bug = UInt8(get_tile_bug(tile))
-            if (bug == UInt8(Bug.ANT) || bug == UInt8(Bug.MOSQUITO))
+            color = get_tile_color(tile)
+            if (
+                bug == UInt8(Bug.ANT) ||
+                bug == UInt8(Bug.MOSQUITO) ||
+                color != board.current_color ||
+                bug == UInt8(Bug.PILLBUG)
+            )
                 good_moves_buffer[good_moves_index += 1] = action_as_index
             elseif (bug == UInt8(Bug.GRASSHOPPER) || bug == UInt8(Bug.SPIDER))
                 bad_moves_buffer[bad_moves_index += 1] = action_as_index
@@ -416,11 +455,11 @@ function order_moves!(
     if valid_best_move != Int32(-1)
         ordered_move_buffer[idx += 1] = valid_best_move
     end
-    for move_i in 1:suggested_moves_index
-        ordered_move_buffer[idx += 1] = suggested_moves_buffer[move_i]
-    end
     for move_i in 1:killer_moves_index
         ordered_move_buffer[idx += 1] = killer_moves_buffer[move_i]
+    end
+    for move_i in 1:suggested_moves_index
+        ordered_move_buffer[idx += 1] = suggested_moves_buffer[move_i]
     end
     for move_i in 1:good_moves_index
         ordered_move_buffer[idx += 1] = good_moves_buffer[move_i]

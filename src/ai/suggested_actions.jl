@@ -10,12 +10,7 @@ const DUMMY_SUGGESTED_ACTIONS::SuggestedActions = SuggestedActions(
 )
 
 function SuggestedActions(buffer::AbstractVector{Int32}, board::Board)
-    return SuggestedActions(
-        0,
-        buffer,
-        board.workspaces.suggested_moves_moving_loc,
-        board.workspaces.suggested_moves_goal_loc,
-    )
+    return SuggestedActions(0, buffer, HexSet(), HexSet())
 end
 
 function add!(sa::SuggestedActions, as_index::Int32)
