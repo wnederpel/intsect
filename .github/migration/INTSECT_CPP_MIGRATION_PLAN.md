@@ -205,7 +205,7 @@ Build:
 
 1. A C++ perft routine.
 2. A small CLI or tool target that runs perft over a game string and depth range.
-3. A test corpus of positions in `intsect-data/positions/`.
+3. A test corpus of positions in `intsect-tests/fixtures/perft_fixtures`.
 
 Validation in this phase:
 

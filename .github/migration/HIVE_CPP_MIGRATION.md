@@ -192,3 +192,18 @@ julia --project=. scripts/verify_cross_engine_perft.jl --cpp-build-cmd "cmake -S
 
 Do not merge move generation, make/undo, search, or evaluation changes in C++ unless
 this parity check passes for the agreed depth and position corpus.
+
+## 9. Distribution (defer until core engine is working)
+
+Do not optimize packaging yet. Treat this as a post-parity milestone once the engine,
+search, and evaluation are stable.
+
+Windows release checklist (later):
+
+- Build with the `release` preset, not `debug` (no sanitizers in shipped binaries).
+- Package the executable plus any required runtime DLLs discovered from a clean-machine
+  run (do not assume a single `.exe` is always enough).
+- Verify startup and a smoke command on a clean Windows environment (fresh VM or
+  machine without dev tools installed).
+- Add a repeatable packaging script/CI job only after manual packaging is confirmed
+  once end-to-end.
