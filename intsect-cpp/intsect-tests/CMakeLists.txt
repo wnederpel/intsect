@@ -2,7 +2,10 @@
 # framework, build, and sanitizers are wired up correctly.
 
 add_executable(intsect-tests
-  unit/smoke_test.cpp)
+  unit/smoke_test.cpp
+  unit/types_test.cpp
+  unit/tile_test.cpp
+  unit/hex_set_test.cpp)
 
 target_link_libraries(intsect-tests PRIVATE
   intsect-engine

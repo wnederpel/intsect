@@ -10,6 +10,6 @@ namespace intsect {
 // Human-readable version string for the C++ rewrite.
 const char* version() noexcept;
 
-}  // namespace intsect
+} // namespace intsect
 
-#endif  // INTSECT_VERSION_HPP
+#endif // INTSECT_VERSION_HPP

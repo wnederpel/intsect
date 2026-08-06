@@ -2,14 +2,14 @@
 // This single translation unit also provides doctest's main().
 
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
-#include <doctest/doctest.h>
-
-#include <cstring>
-
 #include "intsect/version.hpp"
 
+#include <cstring>
+#include <doctest/doctest.h>
+
+
 TEST_CASE("engine version is non-empty") {
-  const char* v = intsect::version();
-  REQUIRE(v != nullptr);
-  CHECK(std::strlen(v) > 0);
+    const char* v = intsect::version();
+    REQUIRE(v != nullptr);
+    CHECK(std::strlen(v) > 0);
 }
