@@ -193,6 +193,11 @@ Definition of done:
 - Expansion bugs are included from day one.
 - No state corruption appears in deep randomized legal-move walks.
 
+## Phase 3.5: partial uhp compliance
+
+Implement as many uhp command as possible with the current board.
+Perft related uhp compliance is done later.
+
 ## Phase 4: C++ perft
 
 Once move generation and make/undo are stable, add perft in C++.
@@ -218,6 +223,11 @@ Definition of done:
 
 - C++ perft is stable on the agreed position corpus.
 - Perft can be used as the first serious migration gate.
+
+
+## Phase 4.5: full uhp compliance
+
+Implement all uhp commands
 
 ## Phase 5: Cross-engine perft comparison
 
