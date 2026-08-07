@@ -45,11 +45,11 @@ enum class Variant : uint8_t {
     Base = 0,
     M    = 1,
     L    = 2,
-    ML   = 3,
+    ML   = 1 + 2,
     P    = 4,
-    MP   = 5,
-    LP   = 6,
-    MLP  = 7,
+    MP   = 1 + 4,
+    LP   = 2 + 4,
+    MLP  = 1 + 2 + 4,
 };
 
 // Color helpers.

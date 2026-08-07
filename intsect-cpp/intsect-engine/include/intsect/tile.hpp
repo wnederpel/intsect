@@ -85,4 +85,19 @@ inline constexpr uint8_t get_tile_unplaced(uint8_t semi_tile) noexcept {
     return static_cast<uint8_t>((semi_tile - 1u) << INDEX_SHIFT);
 }
 
+inline constexpr uint8_t next_bug_num(uint8_t tile) noexcept {
+    if (tile == EMPTY_TILE)
+        return EMPTY_TILE;
+
+    const Bug bug         = get_tile_bug(tile);
+    const uint8_t bug_num = get_tile_bug_num(tile);
+    const uint8_t max_num = MAX_BUG_NUMS[static_cast<size_t>(static_cast<uint8_t>(bug) - 1u)];
+    if (bug_num == max_num)
+        return EMPTY_TILE;
+
+    const uint8_t raw_height = static_cast<uint8_t>(tile & HEIGHT_MASK);
+    return tile_from_info(get_tile_color(tile), bug, static_cast<uint8_t>(bug_num + 1u),
+                          raw_height);
+}
+
 } // namespace intsect
