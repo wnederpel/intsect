@@ -3,6 +3,7 @@
 
 #include "intsect/board.hpp"
 #include "intsect/game_string.hpp"
+#include "intsect/move_generation.hpp"
 #include "intsect/tile.hpp"
 #include "intsect/types.hpp"
 #include "intsect/version.hpp"
@@ -17,6 +18,7 @@
 
 namespace {
 
+using intsect::Action;
 using intsect::Board;
 using intsect::Bug;
 using intsect::Color;
@@ -251,6 +253,19 @@ void cmd_undo(EngineState& state, int count) {
     std::cout << "ok\n";
 }
 
+void cmd_validmoves(EngineState& state) {
+    std::vector<Action> actions = validactions(*state.board);
+    bool first                  = true;
+    for (const Action& action : actions) {
+        if (!first)
+            std::cout << ';';
+        std::cout << move_string_from_action(*state.board, action);
+        first = false;
+    }
+    std::cout << '\n';
+    std::cout << "ok\n";
+}
+
 bool require_game(const EngineState& state) {
     if (!state.has_game()) {
         std::cout << "err No game in progress. Use newgame first.\n";
@@ -294,8 +309,7 @@ int main() {
             cmd_play(state, "pass");
         } else if (cmd == "validmoves") {
             if (require_game(state)) {
-                std::cout << "err validmoves not yet implemented\n";
-                std::cout << "ok\n";
+                cmd_validmoves(state);
             }
         } else if (cmd == "bestmove") {
             if (require_game(state)) {

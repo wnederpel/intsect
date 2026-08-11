@@ -41,10 +41,40 @@ struct Action {
 inline constexpr int HISTORY_BUFFER_SIZE = 600;
 inline constexpr int MAX_UNDERWORLD_DEPTH =
     4; // max pieces that can be under a single tile (2B+M+L)
+inline constexpr size_t MOVE_STORE_SIZE   = 4096;
+inline constexpr size_t PINNED_STORE_SIZE = 4096;
+inline constexpr size_t MOVE_STORE_MASK   = MOVE_STORE_SIZE - 1;
+inline constexpr size_t PINNED_STORE_MASK = PINNED_STORE_SIZE - 1;
+
+struct MoveStoreEntry {
+    uint64_t location_hash = 0;
+    HexSet ant_reachable_hs{};
+};
+
+struct PinnedStoreEntry {
+    uint64_t location_hash = 0;
+    HexSet pinned_pieces_hs{};
+};
+
+struct MoveGenWorkspaces {
+    HexSet move_to_set{};
+    HexSet no_placement_hs{};
+    HexSet pillbug_throw_from{};
+    HexSet pillbug_throw_to{};
+    HexSet mosquito_throw_from{};
+    HexSet mosquito_throw_to{};
+    HexSet ladybug_visited_step_2{};
+    HexSet ispinned_visited{};
+
+    std::array<int, GRID_SIZE> ant_stack{};
+    std::array<int, GRID_SIZE> depth_dict{};
+    std::array<int, GRID_SIZE> low_dict{};
+    std::array<int, GRID_SIZE> parent_dict{};
+};
 
 namespace detail {
 
-inline constexpr uint64_t splitmix64(uint64_t x) noexcept {
+inline constexpr uint64_t split_mix64(uint64_t x) noexcept {
     x += 0x9e3779b97f4a7c15ull;
     x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
     x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
@@ -85,19 +115,19 @@ inline constexpr uint64_t piece_hash_value(uint8_t tile_without_height, int loc,
     const uint64_t seed        = static_cast<uint64_t>(shifted_tile) +
                                  static_cast<uint64_t>(safe_height) * 36ull +
                                  static_cast<uint64_t>(loc) * 36ull * 7ull;
-    return splitmix64(seed);
+    return split_mix64(seed);
 }
 
 inline constexpr uint64_t location_hash_value(int loc) noexcept {
-    return splitmix64(0x123456789abcdef0ull ^ static_cast<uint64_t>(loc));
+    return split_mix64(0x123456789abcdef0ull ^ static_cast<uint64_t>(loc));
 }
 
 inline constexpr uint64_t color_hash_value() noexcept {
-    return splitmix64(0xf00dcafe12345678ull);
+    return split_mix64(0xf00dcafe12345678ull);
 }
 
 inline constexpr uint64_t just_moved_hash_value(int loc) noexcept {
-    return splitmix64(0x55aa00ff11223344ull ^ static_cast<uint64_t>(loc));
+    return split_mix64(0x55aa00ff11223344ull ^ static_cast<uint64_t>(loc));
 }
 
 } // namespace detail
@@ -130,6 +160,10 @@ struct Board {
 
     uint64_t hash          = 0;
     uint64_t location_hash = 0;
+
+    std::array<MoveStoreEntry, MOVE_STORE_SIZE> move_store{};
+    std::array<PinnedStoreEntry, PINNED_STORE_SIZE> pinned_store{};
+    MoveGenWorkspaces workspaces{};
 
     Variant variant = Variant::MLP;
 
