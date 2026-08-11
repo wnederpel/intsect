@@ -23,11 +23,28 @@
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_CXX_COMPILER": "clang++"
       }
+    },
+    {
+      "name": "fast",
+      "displayName": "Fast (Clang, no tests)",
+      "description": "Quick iteration configure that builds engine + CLI + tools and skips tests.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/fast",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "INTSECT_BUILD_TESTS": "OFF"
+      }
     }
   ],
   "buildPresets": [
     { "name": "debug", "configurePreset": "debug" },
-    { "name": "release", "configurePreset": "release" }
+    { "name": "release", "configurePreset": "release" },
+    {
+      "name": "fast",
+      "configurePreset": "fast",
+      "targets": ["intsect-cli", "intsect-tools"]
+    }
   ],
   "testPresets": [
     {

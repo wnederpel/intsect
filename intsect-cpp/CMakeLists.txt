@@ -23,6 +23,11 @@ endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+# Fast iteration toggles: allow a configure/build path that skips tests and
+# test framework fetch while still building CLI and tools.
+option(INTSECT_BUILD_TOOLS "Build intsect developer tools target" ON)
+option(INTSECT_BUILD_TESTS "Build intsect test targets" ON)
+
 # Shared compiler options: warnings-as-errors, C++23, and debug sanitizers.
 # Everything links this INTERFACE target so the rules apply uniformly.
 include(CompilerOptions)
@@ -32,14 +37,22 @@ enable_testing()
 # Lightweight test framework, fetched at configure time (network needed once).
 # doctest 2.4.11 ships an old cmake_minimum_required that CMake 4 rejects; this
 # variable tells CMake to treat that subproject as if it targeted policy 3.5.
-include(FetchContent)
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
-FetchContent_Declare(doctest
-  GIT_REPOSITORY https://github.com/doctest/doctest.git
-  GIT_TAG v2.4.11)
-FetchContent_MakeAvailable(doctest)
+if(INTSECT_BUILD_TESTS)
+  include(FetchContent)
+  set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+  FetchContent_Declare(doctest
+    GIT_REPOSITORY https://github.com/doctest/doctest.git
+    GIT_TAG v2.4.11)
+  FetchContent_MakeAvailable(doctest)
+endif()
 
 add_subdirectory(intsect-engine)
 add_subdirectory(intsect-cli)
-add_subdirectory(intsect-tools)
-add_subdirectory(intsect-tests)
+
+if(INTSECT_BUILD_TOOLS)
+  add_subdirectory(intsect-tools)
+endif()
+
+if(INTSECT_BUILD_TESTS)
+  add_subdirectory(intsect-tests)
+endif()

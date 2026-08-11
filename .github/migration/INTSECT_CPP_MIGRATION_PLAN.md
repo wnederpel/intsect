@@ -153,6 +153,10 @@ Definition of done:
 - Applying and undoing a move restores the exact prior state.
 - No sanitizer errors occur in repeated apply/undo loops.
 
+## Phase 2.5: faster compilation
+
+Add a 'fast' preset that does uses a variable optimization level (or the default) and really just does the minimal amount of work otherwise to get something runnable as fast as possible for the fastest iteration cycle.
+
 ## Phase 3: Move generation
 
 This is the key migration phase.

@@ -78,3 +78,19 @@ ctest --test-dir build/debug --output-on-failure
 cmake --preset release
 cmake --build --preset release
 ```
+
+## Fast Iteration build
+
+Use this when you want the quickest runnable build cycle.
+
+```powershell
+cmake --preset fast
+cmake --build --preset fast
+```
+
+This preset keeps C++23 and warnings, but minimizes configure/build work by:
+
+- building `intsect-engine`, `intsect-cli`, and `intsect-tools`
+- skipping `intsect-tests` and doctest fetch/discovery
+
+Build output goes to `build/fast/`.
