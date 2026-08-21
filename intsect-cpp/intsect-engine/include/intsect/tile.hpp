@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intsect/types.hpp"
+#include "types.hpp"
 
 #include <array>
 #include <cstdint>
@@ -13,25 +13,25 @@ namespace intsect {
 //   bit  2:   color - 1
 //   bits 1-0: height (0 stored = ground level 1; EMPTY_TILE = 0xFF)
 
-inline constexpr uint8_t BUG_NUM_MASK  = 0b11000000u;
+inline constexpr uint8_t BUG_NUM_MASK = 0b11000000u;
 inline constexpr uint8_t BUG_NUM_SHIFT = 6;
-inline constexpr uint8_t BUG_MASK      = 0b00111000u;
-inline constexpr uint8_t BUG_SHIFT     = 3;
-inline constexpr uint8_t COLOR_MASK    = 0b00000100u;
-inline constexpr uint8_t COLOR_SHIFT   = 2;
-inline constexpr uint8_t HEIGHT_MASK   = 0b00000011u;
-inline constexpr uint8_t HEIGHT_SHIFT  = 0;
+inline constexpr uint8_t BUG_MASK = 0b00111000u;
+inline constexpr uint8_t BUG_SHIFT = 3;
+inline constexpr uint8_t COLOR_MASK = 0b00000100u;
+inline constexpr uint8_t COLOR_SHIFT = 2;
+inline constexpr uint8_t HEIGHT_MASK = 0b00000011u;
+inline constexpr uint8_t HEIGHT_SHIFT = 0;
 // Stripping the 2 height bits gives the 0-based index into the tile_locs table.
 inline constexpr uint8_t INDEX_SHIFT = 2;
 
 inline constexpr uint8_t EMPTY_TILE = 0xFFu;
 
 // Sentinel values for a tile's location on the board.
-inline constexpr int NOT_PLACED  = -1;
+inline constexpr int NOT_PLACED = -1;
 inline constexpr int INVALID_LOC = -2;
 inline constexpr int UNDERGROUND = -3;
 
-inline constexpr int BUGS_IN_PLAY   = 8;
+inline constexpr int BUGS_IN_PLAY = 8;
 inline constexpr int TOTAL_NUM_BUGS = 14;
 
 // Maximum bug_num per bug type (0-based).
@@ -89,7 +89,7 @@ inline constexpr uint8_t next_bug_num(uint8_t tile) noexcept {
     if (tile == EMPTY_TILE)
         return EMPTY_TILE;
 
-    const Bug bug         = get_tile_bug(tile);
+    const Bug bug = get_tile_bug(tile);
     const uint8_t bug_num = get_tile_bug_num(tile);
     const uint8_t max_num = MAX_BUG_NUMS[static_cast<size_t>(static_cast<uint8_t>(bug) - 1u)];
     if (bug_num == max_num)

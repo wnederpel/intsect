@@ -1,6 +1,6 @@
 #pragma once
 
-#include "intsect/board.hpp"
+#include "board.hpp"
 
 #include <array>
 #include <bit>
@@ -8,7 +8,7 @@
 
 namespace intsect {
 
-inline constexpr int VALID_BUFFER_SIZE                      = 400;
+inline constexpr int VALID_BUFFER_SIZE = 400;
 inline constexpr std::array<uint8_t, BUGS_IN_PLAY> MAX_NUMS = {2, 2, 1, 1, 0, 0, 0, 0};
 
 inline constexpr std::array<Direction, 6> JULIA_NEIGH_ORDER = {
@@ -25,15 +25,15 @@ inline std::array<int, 6> all_neighs(int loc) noexcept {
 
 [[nodiscard]] inline bool can_slide(int i, const Board& board,
                                     const std::array<int, 6>& neigh_locs) noexcept {
-    const int left_i  = (i == 0) ? 5 : i - 1;
+    const int left_i = (i == 0) ? 5 : i - 1;
     const int right_i = (i == 5) ? 0 : i + 1;
 
-    const int left_neigh  = neigh_locs[static_cast<size_t>(left_i)];
+    const int left_neigh = neigh_locs[static_cast<size_t>(left_i)];
     const int right_neigh = neigh_locs[static_cast<size_t>(right_i)];
-    const int goal        = neigh_locs[static_cast<size_t>(i)];
+    const int goal = neigh_locs[static_cast<size_t>(i)];
 
-    const bool goal_empty  = board.get_tile_on_board(goal) == EMPTY_TILE;
-    const bool left_empty  = board.get_tile_on_board(left_neigh) == EMPTY_TILE;
+    const bool goal_empty = board.get_tile_on_board(goal) == EMPTY_TILE;
+    const bool left_empty = board.get_tile_on_board(left_neigh) == EMPTY_TILE;
     const bool right_empty = board.get_tile_on_board(right_neigh) == EMPTY_TILE;
     return goal_empty && (left_empty != right_empty);
 }
@@ -56,7 +56,7 @@ inline std::array<int, 6> all_neighs(int loc) noexcept {
 
 inline void move_1(const Board& board, int startloc, HexSet& move_to_set) {
     const std::array<int, 6> neigh_locs = all_neighs(startloc);
-    uint8_t slide_neighs                = get_slide_neighs(board, neigh_locs);
+    uint8_t slide_neighs = get_slide_neighs(board, neigh_locs);
 
     while (slide_neighs != 0) {
         const uint8_t bit_i = static_cast<uint8_t>(std::countr_zero(slide_neighs));
@@ -97,8 +97,8 @@ inline void update_ispinned_general(Board& board) {
     HexSet& visited = board.workspaces.ispinned_visited;
     visited.clear();
 
-    std::array<int, GRID_SIZE>& depth_dict  = board.workspaces.depth_dict;
-    std::array<int, GRID_SIZE>& low_dict    = board.workspaces.low_dict;
+    std::array<int, GRID_SIZE>& depth_dict = board.workspaces.depth_dict;
+    std::array<int, GRID_SIZE>& low_dict = board.workspaces.low_dict;
     std::array<int, GRID_SIZE>& parent_dict = board.workspaces.parent_dict;
     parent_dict.fill(INVALID_LOC);
 
@@ -114,9 +114,9 @@ inline void update_ispinned_general(Board& board) {
                         int loc, int d) {
             vis.set(loc);
             depth[static_cast<size_t>(loc)] = d;
-            low[static_cast<size_t>(loc)]   = d;
+            low[static_cast<size_t>(loc)] = d;
 
-            int child_count      = 0;
+            int child_count = 0;
             bool is_articulation = false;
             const auto neighbors = all_neighs(loc);
             for (int nloc : neighbors) {
@@ -152,7 +152,7 @@ inline void update_ispinned_general(Board& board) {
 }
 
 inline void ant_moves(Board& board, int startloc, HexSet& move_to_set) {
-    const uint8_t tmp_tile         = board.get_tile_on_board(startloc);
+    const uint8_t tmp_tile = board.get_tile_on_board(startloc);
     const uint64_t move_entry_hash = board.location_hash ^ detail::location_hash_value(startloc);
 
     MoveStoreEntry& move_entry =
@@ -166,8 +166,8 @@ inline void ant_moves(Board& board, int startloc, HexSet& move_to_set) {
     board.set_tile_on_board(startloc, EMPTY_TILE);
 
     std::array<int, GRID_SIZE>& stack_arr = board.workspaces.ant_stack;
-    int stack_ptr                         = 1;
-    stack_arr[0]                          = startloc;
+    int stack_ptr = 1;
+    stack_arr[0] = startloc;
     move_to_set.set(startloc);
 
     while (stack_ptr != 0) {
@@ -175,7 +175,7 @@ inline void ant_moves(Board& board, int startloc, HexSet& move_to_set) {
         --stack_ptr;
 
         const std::array<int, 6> neigh_locs = all_neighs(loc);
-        uint8_t slide_neighs                = get_slide_neighs(board, neigh_locs);
+        uint8_t slide_neighs = get_slide_neighs(board, neigh_locs);
 
         while (slide_neighs != 0) {
             const uint8_t bit_i = static_cast<uint8_t>(std::countr_zero(slide_neighs));
@@ -211,7 +211,7 @@ inline void moves_to_depth(Board& board, int startloc, int depth, HexSet& move_t
     }
 
     const std::array<int, 6> neigh_locs = all_neighs(cur_loc);
-    uint8_t slide_neighs                = get_slide_neighs(board, neigh_locs);
+    uint8_t slide_neighs = get_slide_neighs(board, neigh_locs);
     while (slide_neighs != 0) {
         const uint8_t bit_i = static_cast<uint8_t>(std::countr_zero(slide_neighs));
         slide_neighs = static_cast<uint8_t>(slide_neighs & static_cast<uint8_t>(slide_neighs - 1));
@@ -236,26 +236,26 @@ inline void spider_moves(Board& board, int startloc, HexSet& move_to_set) {
 
 [[nodiscard]] inline bool can_slide_pillbug(int i, const Board& board,
                                             const std::array<int, 6>& neigh_locs) {
-    const int left_i         = (i == 0) ? 5 : i - 1;
-    const int right_i        = (i == 5) ? 0 : i + 1;
-    const uint8_t left_tile  = board.get_tile_on_board(neigh_locs[static_cast<size_t>(left_i)]);
+    const int left_i = (i == 0) ? 5 : i - 1;
+    const int right_i = (i == 5) ? 0 : i + 1;
+    const uint8_t left_tile = board.get_tile_on_board(neigh_locs[static_cast<size_t>(left_i)]);
     const uint8_t right_tile = board.get_tile_on_board(neigh_locs[static_cast<size_t>(right_i)]);
     return get_tile_height(left_tile) < 2 || get_tile_height(right_tile) < 2;
 }
 
 [[nodiscard]] inline bool can_slide_high(int i, const Board& board,
                                          const std::array<int, 6>& neigh_locs, uint8_t height) {
-    const int left_i  = (i == 0) ? 5 : i - 1;
+    const int left_i = (i == 0) ? 5 : i - 1;
     const int right_i = (i == 5) ? 0 : i + 1;
 
-    const uint8_t left_tile  = board.get_tile_on_board(neigh_locs[static_cast<size_t>(left_i)]);
+    const uint8_t left_tile = board.get_tile_on_board(neigh_locs[static_cast<size_t>(left_i)]);
     const uint8_t right_tile = board.get_tile_on_board(neigh_locs[static_cast<size_t>(right_i)]);
-    const uint8_t goal_tile  = board.get_tile_on_board(neigh_locs[static_cast<size_t>(i)]);
+    const uint8_t goal_tile = board.get_tile_on_board(neigh_locs[static_cast<size_t>(i)]);
 
-    const uint8_t left_h  = get_tile_height(left_tile);
+    const uint8_t left_h = get_tile_height(left_tile);
     const uint8_t right_h = get_tile_height(right_tile);
-    const uint8_t goal_h  = get_tile_height(goal_tile);
-    const uint8_t needed  = static_cast<uint8_t>(std::max<int>(goal_h + 1, height));
+    const uint8_t goal_h = get_tile_height(goal_tile);
+    const uint8_t needed = static_cast<uint8_t>(std::max<int>(goal_h + 1, height));
 
     return left_h < needed || right_h < needed;
 }
@@ -274,7 +274,7 @@ inline void beetle_moves(Board& board, int startloc, uint8_t height, HexSet& mov
     board.set_tile_on_board(startloc, EMPTY_TILE);
 
     for (int i = 0; i < 6; ++i) {
-        const int goal_loc  = neigh_locs[static_cast<size_t>(i)];
+        const int goal_loc = neigh_locs[static_cast<size_t>(i)];
         const bool occupied = board.get_tile_on_board(goal_loc) != EMPTY_TILE;
         if ((occupied && can_slide_high(i, board, neigh_locs, 1)) ||
             (!occupied && can_slide(i, board, neigh_locs))) {
@@ -295,12 +295,12 @@ inline void ladybug_moves(Board& board, int startloc, HexSet& move_to_set) {
     const std::array<int, 6> neigh_locs = all_neighs(startloc);
 
     for (int i = 0; i < 6; ++i) {
-        const int step_1_loc      = neigh_locs[static_cast<size_t>(i)];
+        const int step_1_loc = neigh_locs[static_cast<size_t>(i)];
         const uint8_t step_1_tile = board.get_tile_on_board(step_1_loc);
         if (step_1_tile == EMPTY_TILE)
             continue;
 
-        const int step_1_left_i  = (i == 0) ? 5 : i - 1;
+        const int step_1_left_i = (i == 0) ? 5 : i - 1;
         const int step_1_right_i = (i == 5) ? 0 : i + 1;
         const uint8_t step_1_left_tile =
             board.get_tile_on_board(neigh_locs[static_cast<size_t>(step_1_left_i)]);
@@ -308,26 +308,26 @@ inline void ladybug_moves(Board& board, int startloc, HexSet& move_to_set) {
             board.get_tile_on_board(neigh_locs[static_cast<size_t>(step_1_right_i)]);
 
         const uint8_t step_1_height_raw = static_cast<uint8_t>(step_1_tile & 0x03u);
-        const uint8_t step_1_left_h  = step_1_left_tile == EMPTY_TILE
-                                           ? 0
-                                           : static_cast<uint8_t>((step_1_left_tile & 0x03u) + 1);
+        const uint8_t step_1_left_h = step_1_left_tile == EMPTY_TILE
+                                          ? 0
+                                          : static_cast<uint8_t>((step_1_left_tile & 0x03u) + 1);
         const uint8_t step_1_right_h = step_1_right_tile == EMPTY_TILE
                                            ? 0
                                            : static_cast<uint8_t>((step_1_right_tile & 0x03u) + 1);
-        const uint8_t step_1_height  = static_cast<uint8_t>(step_1_height_raw + 1);
-        const uint8_t max_height_1   = static_cast<uint8_t>(step_1_height + 1);
+        const uint8_t step_1_height = static_cast<uint8_t>(step_1_height_raw + 1);
+        const uint8_t max_height_1 = static_cast<uint8_t>(step_1_height + 1);
 
         if (!(step_1_left_h < max_height_1 || step_1_right_h < max_height_1))
             continue;
 
         const std::array<int, 6> step_2_locs = all_neighs(step_1_loc);
         for (int j = 0; j < 6; ++j) {
-            const int step_2_loc      = step_2_locs[static_cast<size_t>(j)];
+            const int step_2_loc = step_2_locs[static_cast<size_t>(j)];
             const uint8_t step_2_tile = board.get_tile_on_board(step_2_loc);
             if (step_2_tile == EMPTY_TILE || visited_step_2.get(step_2_loc))
                 continue;
 
-            const int step_2_left_i  = (j == 0) ? 5 : j - 1;
+            const int step_2_left_i = (j == 0) ? 5 : j - 1;
             const int step_2_right_i = (j == 5) ? 0 : j + 1;
             const uint8_t step_2_left_tile =
                 board.get_tile_on_board(step_2_locs[static_cast<size_t>(step_2_left_i)]);
@@ -344,7 +344,7 @@ inline void ladybug_moves(Board& board, int startloc, HexSet& move_to_set) {
                     ? 0
                     : static_cast<uint8_t>((step_2_right_tile & 0x03u) + 1);
             const uint8_t step_2_height = static_cast<uint8_t>(step_2_height_raw + 1);
-            const uint8_t h_1_to_2      = static_cast<uint8_t>(step_1_height + 1);
+            const uint8_t h_1_to_2 = static_cast<uint8_t>(step_1_height + 1);
             const uint8_t max_height_2 =
                 static_cast<uint8_t>(std::max<int>(step_2_height + 1, h_1_to_2));
 
@@ -360,7 +360,7 @@ inline void ladybug_moves(Board& board, int startloc, HexSet& move_to_set) {
                     move_to_set.get(step_3_loc))
                     continue;
 
-                const int step_3_left_i  = (k == 0) ? 5 : k - 1;
+                const int step_3_left_i = (k == 0) ? 5 : k - 1;
                 const int step_3_right_i = (k == 5) ? 0 : k + 1;
                 const uint8_t step_3_left_tile =
                     board.get_tile_on_board(step_3_locs[static_cast<size_t>(step_3_left_i)]);
@@ -406,7 +406,7 @@ inline void pillbug_moves_throw(const Board& board, int startloc, const HexSet& 
     }
 
     for (int i = 0; i < 6; ++i) {
-        const int loc      = neigh_locs[static_cast<size_t>(i)];
+        const int loc = neigh_locs[static_cast<size_t>(i)];
         const uint8_t tile = board.get_tile_on_board(loc);
         if (tile != EMPTY_TILE && !ispinned.get(loc) && loc != board.just_moved_loc &&
             get_tile_height(tile) == 1 && can_slide_pillbug(i, board, neigh_locs)) {
@@ -477,20 +477,20 @@ inline void bugmoves(Board& board, int loc, int bug, uint8_t height, const HexSe
 
 inline void add_moves(Board& board, const HexSet& ispinned, std::vector<Action>& out_actions,
                       Color current_color) {
-    HexSet& move_to_set         = board.workspaces.move_to_set;
-    HexSet& pillbug_throw_from  = board.workspaces.pillbug_throw_from;
-    HexSet& pillbug_throw_to    = board.workspaces.pillbug_throw_to;
+    HexSet& move_to_set = board.workspaces.move_to_set;
+    HexSet& pillbug_throw_from = board.workspaces.pillbug_throw_from;
+    HexSet& pillbug_throw_to = board.workspaces.pillbug_throw_to;
     HexSet& mosquito_throw_from = board.workspaces.mosquito_throw_from;
-    HexSet& mosquito_throw_to   = board.workspaces.mosquito_throw_to;
+    HexSet& mosquito_throw_to = board.workspaces.mosquito_throw_to;
 
     const uint8_t wP = tile_from_info(Color::White, Bug::PILLBUG, 0);
     const uint8_t bP = tile_from_info(Color::Black, Bug::PILLBUG, 0);
     const uint8_t wM = tile_from_info(Color::White, Bug::MOSQUITO, 0);
     const uint8_t bM = tile_from_info(Color::Black, Bug::MOSQUITO, 0);
 
-    const int wP_loc          = board.get_loc(wP);
-    const int bP_loc          = board.get_loc(bP);
-    const int my_pillbug_loc  = (current_color == Color::White) ? wP_loc : bP_loc;
+    const int wP_loc = board.get_loc(wP);
+    const int bP_loc = board.get_loc(bP);
+    const int my_pillbug_loc = (current_color == Color::White) ? wP_loc : bP_loc;
     const int my_mosquito_loc = board.get_loc((current_color == Color::White) ? wM : bM);
 
     pillbug_throw_from.clear();
@@ -505,7 +505,7 @@ inline void add_moves(Board& board, const HexSet& ispinned, std::vector<Action>&
     if (my_mosquito_loc >= 0 && my_mosquito_loc != board.just_moved_loc &&
         get_tile_height(board.get_tile_on_board(my_mosquito_loc)) == 1) {
         const std::array<int, 6> mosq_neighs = all_neighs(my_mosquito_loc);
-        bool mosq_can_throw                  = false;
+        bool mosq_can_throw = false;
         for (int n : mosq_neighs) {
             if (n == wP_loc || n == bP_loc) {
                 mosq_can_throw = true;
@@ -533,7 +533,7 @@ inline void add_moves(Board& board, const HexSet& ispinned, std::vector<Action>&
             if (loc == UNDERGROUND || loc == board.just_moved_loc || loc == INVALID_LOC)
                 continue;
 
-            const uint8_t tile   = board.get_tile_on_board(loc);
+            const uint8_t tile = board.get_tile_on_board(loc);
             const uint8_t height = get_tile_height(tile);
 
             move_to_set.clear();
@@ -574,12 +574,12 @@ inline void add_moves(Board& board, const HexSet& ispinned, std::vector<Action>&
 }
 
 inline void for_placement_locs(Board& board, Color current_color, const auto& callback) {
-    const size_t me   = static_cast<size_t>(static_cast<uint8_t>(current_color) - 1u);
+    const size_t me = static_cast<size_t>(static_cast<uint8_t>(current_color) - 1u);
     const size_t them = static_cast<size_t>(static_cast<uint8_t>(other_color(current_color)) - 1u);
 
-    const HexSet& my_pieces    = board.pieces[me];
+    const HexSet& my_pieces = board.pieces[me];
     const HexSet& their_pieces = board.pieces[them];
-    HexSet& no_placement_hs    = board.workspaces.no_placement_hs;
+    HexSet& no_placement_hs = board.workspaces.no_placement_hs;
 
     no_placement_hs.clear();
 
@@ -648,8 +648,8 @@ inline void add_placements(Board& board, std::vector<Action>& out_actions, Color
     });
 }
 
-inline void validactions_general(Board& board, std::vector<Action>& out_actions,
-                                 Color current_color) {
+inline void valid_actions_general(Board& board, std::vector<Action>& out_actions,
+                                  Color current_color) {
     if (board.queen_placed[static_cast<size_t>(static_cast<uint8_t>(current_color) - 1u)]) {
         update_ispinned_general(board);
         add_moves(board, board.ispinned, out_actions, current_color);
@@ -661,17 +661,19 @@ inline void validactions_general(Board& board, std::vector<Action>& out_actions,
         out_actions.push_back(Action::make_pass());
 }
 
-inline std::vector<Action> validactions(Board& board, Color current_color) {
+inline std::vector<Action> get_valid_actions(Board& board, Color current_color) {
+    // TODO: There needs to be another version of the valid_actions method that also accepts the
+    // out_actions as an input to avoid allocations
     std::vector<Action> out_actions;
     out_actions.reserve(VALID_BUFFER_SIZE);
 
     if (board.gameover)
         return out_actions;
 
-    const size_t color_i           = static_cast<size_t>(static_cast<uint8_t>(current_color) - 1u);
+    const size_t color_i = static_cast<size_t>(static_cast<uint8_t>(current_color) - 1u);
     const bool need_to_place_queen = !board.queen_placed[color_i] && board.turn == 4;
-    const bool first_placement     = board.ply == 1;
-    const bool second_placement    = board.ply == 2;
+    const bool first_placement = board.ply == 1;
+    const bool second_placement = board.ply == 2;
 
     if (need_to_place_queen)
         queen_placements(board, out_actions, current_color);
@@ -680,13 +682,13 @@ inline std::vector<Action> validactions(Board& board, Color current_color) {
     else if (second_placement)
         second_placements(board, out_actions, current_color);
     else
-        validactions_general(board, out_actions, current_color);
+        valid_actions_general(board, out_actions, current_color);
 
     return out_actions;
 }
 
-inline std::vector<Action> validactions(Board& board) {
-    return validactions(board, board.current_color);
+inline std::vector<Action> get_valid_actions(Board& board) {
+    return get_valid_actions(board, board.current_color);
 }
 
 } // namespace intsect

@@ -26,7 +26,7 @@ bool is_legal_move(const Board& board, const std::string& move_string) {
     const std::optional<Action> parsed = action_from_move_string(board, move_string);
     if (!parsed.has_value())
         return false;
-    return contains_action(validactions(const_cast<Board&>(board)), *parsed);
+    return contains_action(get_valid_actions(const_cast<Board&>(board)), *parsed);
 }
 
 Action parse_action_or_fail(const Board& board, const std::string& move_string) {
@@ -36,8 +36,8 @@ Action parse_action_or_fail(const Board& board, const std::string& move_string) 
 }
 
 void play_legal_move(Board& board, const std::string& move_string) {
-    const Action action               = parse_action_or_fail(board, move_string);
-    const std::vector<Action> actions = validactions(board);
+    const Action action = parse_action_or_fail(board, move_string);
+    const std::vector<Action> actions = get_valid_actions(board);
     REQUIRE(contains_action(actions, action));
     CHECK(board.do_action(action));
 }
@@ -47,7 +47,7 @@ void play_legal_move(Board& board, const std::string& move_string) {
 TEST_CASE("Move generation first placement ordering matches Julia") {
     Board board{Variant::MLP};
 
-    const std::vector<Action> actions = validactions(board);
+    const std::vector<Action> actions = get_valid_actions(board);
     REQUIRE(actions.size() == 7);
 
     const std::array<Bug, 7> expected_bugs = {Bug::ANT,     Bug::GRASSHOPPER, Bug::BEETLE,
@@ -65,7 +65,7 @@ TEST_CASE("Move generation first placement ordering matches Julia") {
 TEST_CASE("Move generation first move cannot place queen") {
     Board board{Variant::MLP};
 
-    const std::vector<Action> actions = validactions(board);
+    const std::vector<Action> actions = get_valid_actions(board);
     REQUIRE(actions.size() == 7);
 
     const uint8_t wq = tile_from_info(Color::White, Bug::QUEEN, 0);
@@ -80,10 +80,10 @@ TEST_CASE("Move generation second placement ordering matches Julia") {
     Board board{Variant::MLP};
     place(board, MID, Color::White, Bug::SPIDER, 0);
 
-    const std::vector<Action> actions = validactions(board);
+    const std::vector<Action> actions = get_valid_actions(board);
     REQUIRE(actions.size() == 42);
 
-    const std::array<int, 6> neighs        = all_neighs(MID);
+    const std::array<int, 6> neighs = all_neighs(MID);
     const std::array<Bug, 7> expected_bugs = {Bug::ANT,     Bug::GRASSHOPPER, Bug::BEETLE,
                                               Bug::SPIDER,  Bug::LADYBUG,     Bug::PILLBUG,
                                               Bug::MOSQUITO};
@@ -112,8 +112,8 @@ TEST_CASE("Move generation queen placement rule on turn 4") {
     REQUIRE(board.current_color == Color::White);
     REQUIRE(board.turn == 4);
 
-    const uint8_t wq                  = tile_from_info(Color::White, Bug::QUEEN, 0);
-    const std::vector<Action> actions = validactions(board);
+    const uint8_t wq = tile_from_info(Color::White, Bug::QUEEN, 0);
+    const std::vector<Action> actions = get_valid_actions(board);
     REQUIRE(!actions.empty());
 
     for (const Action& action : actions) {
@@ -136,8 +136,8 @@ TEST_CASE("Move generation black queen placement rule on turn 4") {
     REQUIRE(board.current_color == Color::Black);
     REQUIRE(board.turn == 4);
 
-    const uint8_t bq                  = tile_from_info(Color::Black, Bug::QUEEN, 0);
-    const std::vector<Action> actions = validactions(board);
+    const uint8_t bq = tile_from_info(Color::Black, Bug::QUEEN, 0);
+    const std::vector<Action> actions = get_valid_actions(board);
     REQUIRE(!actions.empty());
 
     for (const Action& action : actions) {
@@ -150,7 +150,7 @@ TEST_CASE("Move generation second player's first move cannot place queen") {
     Board board{Variant::MLP};
     place(board, MID, Color::White, Bug::QUEEN, 0);
 
-    const std::vector<Action> actions = validactions(board);
+    const std::vector<Action> actions = get_valid_actions(board);
     REQUIRE(actions.size() == 42);
 
     const uint8_t bq = tile_from_info(Color::Black, Bug::QUEEN, 0);
@@ -163,12 +163,12 @@ TEST_CASE("Move generation second player's first move cannot place queen") {
 TEST_CASE("Move generation ant cache stores and reuses reachable set") {
     Board board{Variant::MLP};
 
-    const int bQ_loc  = MID - 1;
+    const int bQ_loc = MID - 1;
     const int wG1_loc = apply_direction(bQ_loc, Direction::SW);
     const int wB1_loc = apply_direction(wG1_loc, Direction::SE);
     const int bA1_loc = apply_direction(wB1_loc, Direction::SE);
     const int bB1_loc = apply_direction(bA1_loc, Direction::NE);
-    const int wQ_loc  = apply_direction(bB1_loc, Direction::NE);
+    const int wQ_loc = apply_direction(bB1_loc, Direction::NE);
 
     place(board, wQ_loc, Color::White, Bug::QUEEN, 0);
     place(board, bQ_loc, Color::Black, Bug::QUEEN, 0);
@@ -181,7 +181,7 @@ TEST_CASE("Move generation ant cache stores and reuses reachable set") {
     ant_moves(board, bA1_loc, move_to_set_1);
     REQUIRE(move_to_set_1.count() > 10);
 
-    const uint64_t key          = board.location_hash ^ detail::location_hash_value(bA1_loc);
+    const uint64_t key = board.location_hash ^ detail::location_hash_value(bA1_loc);
     const MoveStoreEntry& entry = board.move_store[static_cast<size_t>(key & MOVE_STORE_MASK)];
     CHECK(entry.location_hash == key);
     CHECK(entry.ant_reachable_hs.get(bA1_loc));
@@ -194,8 +194,8 @@ TEST_CASE("Move generation ant cache stores and reuses reachable set") {
 TEST_CASE("Move generation beetle movement on top of hive") {
     Board board{Variant::MLP};
 
-    const int bQ_loc  = MID - 1;
-    const int wQ_loc  = apply_direction(bQ_loc, Direction::E);
+    const int bQ_loc = MID - 1;
+    const int wQ_loc = apply_direction(bQ_loc, Direction::E);
     const int wB1_loc = apply_direction(bQ_loc, Direction::NE);
     const int bB1_loc = apply_direction(bQ_loc, Direction::SE);
 
@@ -262,9 +262,9 @@ TEST_CASE("Move generation mosquito cannot move when only touching mosquito") {
 TEST_CASE("Move generation spider cannot move to itself") {
     Board board{Variant::MLP};
 
-    const int wQ_loc  = MID - 2;
-    const int bQ_loc  = apply_direction(wQ_loc, Direction::E);
-    const int wL_loc  = apply_direction(bQ_loc, Direction::E);
+    const int wQ_loc = MID - 2;
+    const int bQ_loc = apply_direction(wQ_loc, Direction::E);
+    const int wL_loc = apply_direction(bQ_loc, Direction::E);
     const int wA1_loc = apply_direction(wL_loc, Direction::NE);
     const int wA2_loc = apply_direction(wA1_loc, Direction::NW);
     const int wA3_loc = apply_direction(wA2_loc, Direction::NW);
@@ -332,13 +332,13 @@ TEST_CASE("Move generation pillbug special moves can fill elbows") {
 TEST_CASE("Move generation pillbug cannot special move through beetle gate") {
     Board board{Variant::MLP};
 
-    const int wP_loc  = MID - 1;
+    const int wP_loc = MID - 1;
     const int wB1_loc = apply_direction(wP_loc, Direction::SW);
-    const int wM_loc  = apply_direction(wB1_loc, Direction::NW);
+    const int wM_loc = apply_direction(wB1_loc, Direction::NW);
 
     const int bB1_loc = apply_direction(wP_loc, Direction::E);
-    const int bQ_loc  = apply_direction(bB1_loc, Direction::NE);
-    const int bM_loc  = apply_direction(bQ_loc, Direction::NE);
+    const int bQ_loc = apply_direction(bB1_loc, Direction::NE);
+    const int bM_loc = apply_direction(bQ_loc, Direction::NE);
 
     put(board, wP_loc, Color::White, Bug::PILLBUG);
     put(board, wB1_loc, Color::White, Bug::BEETLE, 0, 1);
@@ -365,9 +365,9 @@ TEST_CASE("Move generation pillbug cannot special move through beetle gate") {
 TEST_CASE("Move generation pillbug cannot throw the tile that just moved") {
     Board board{Variant::MLP};
 
-    const int bQ_loc  = MID - 1;
-    const int wP_loc  = apply_direction(bQ_loc, Direction::SE);
-    const int wQ_loc  = apply_direction(wP_loc, Direction::SE);
+    const int bQ_loc = MID - 1;
+    const int wP_loc = apply_direction(bQ_loc, Direction::SE);
+    const int wQ_loc = apply_direction(wP_loc, Direction::SE);
     const int bA1_loc = apply_direction(wQ_loc, Direction::NE);
     const int wS1_loc = apply_direction(bA1_loc, Direction::NW);
     const int bB1_loc = apply_direction(wS1_loc, Direction::NE);
@@ -396,9 +396,9 @@ TEST_CASE("Move generation pillbug cannot throw the tile that just moved") {
 TEST_CASE("Move generation pillbug cannot throw stacked pieces") {
     Board board{Variant::MLP};
 
-    const int wP_loc  = MID;
+    const int wP_loc = MID;
     const int wB1_loc = apply_direction(wP_loc, Direction::E);
-    const int bQ_loc  = apply_direction(wP_loc, Direction::W);
+    const int bQ_loc = apply_direction(wP_loc, Direction::W);
 
     put(board, wP_loc, Color::White, Bug::PILLBUG);
     put(board, bQ_loc, Color::Black, Bug::QUEEN);
@@ -418,7 +418,7 @@ TEST_CASE("Move generation no movement actions before queen is placed") {
     play_legal_move(board, "wL");
     play_legal_move(board, "bL wL-");
 
-    const std::vector<Action> actions = validactions(board);
+    const std::vector<Action> actions = get_valid_actions(board);
     REQUIRE(!actions.empty());
     for (const Action& action : actions)
         CHECK(action.kind == ActionKind::Placement);
@@ -427,12 +427,12 @@ TEST_CASE("Move generation no movement actions before queen is placed") {
 TEST_CASE("Move generation ant movement wraps around board edges") {
     Board board{Variant::MLP};
 
-    const int bQ_loc  = 1;
+    const int bQ_loc = 1;
     const int wG1_loc = apply_direction(bQ_loc, Direction::SW);
     const int wB1_loc = apply_direction(wG1_loc, Direction::SE);
     const int bA1_loc = apply_direction(wB1_loc, Direction::SE);
     const int bB1_loc = apply_direction(bA1_loc, Direction::NE);
-    const int wQ_loc  = apply_direction(bB1_loc, Direction::NE);
+    const int wQ_loc = apply_direction(bB1_loc, Direction::NE);
 
     put(board, bQ_loc, Color::Black, Bug::QUEEN);
     put(board, wQ_loc, Color::White, Bug::QUEEN);
@@ -474,7 +474,7 @@ TEST_CASE("Move generation sometimes only pass is legal") {
     CHECK(board.do_action(Action::make_climb(136, 119)));
     CHECK(board.do_action(Action::make_climb(103, 119)));
 
-    const std::vector<Action> actions = validactions(board);
+    const std::vector<Action> actions = get_valid_actions(board);
     REQUIRE(actions.size() == 1);
     CHECK(actions.front() == Action::make_pass());
 }
@@ -488,12 +488,12 @@ TEST_CASE("Move generation mosquito on top only has beetle-like moves") {
     for (const std::string& move : seq)
         play_legal_move(board, move);
 
-    const std::vector<Action> actions = validactions(board);
+    const std::vector<Action> actions = get_valid_actions(board);
 
     CHECK(!contains_action(actions, parse_action_or_fail(board, "wM bA1-")));
     CHECK(!contains_action(actions, parse_action_or_fail(board, "wM bQ")));
 
-    const int wM_loc                = board.get_loc(tile_from_info(Color::White, Bug::MOSQUITO, 0));
+    const int wM_loc = board.get_loc(tile_from_info(Color::White, Bug::MOSQUITO, 0));
     const std::array<int, 6> neighs = all_neighs(wM_loc);
 
     int mosquito_action_count = 0;
@@ -501,7 +501,7 @@ TEST_CASE("Move generation mosquito on top only has beetle-like moves") {
         if (action.from != wM_loc)
             continue;
         ++mosquito_action_count;
-        const bool is_move  = action.kind == ActionKind::Move;
+        const bool is_move = action.kind == ActionKind::Move;
         const bool is_climb = action.kind == ActionKind::Climb;
         if (!is_move)
             CHECK(is_climb);
@@ -537,7 +537,7 @@ TEST_CASE("Move generation handles repeated piece climbs for mosquitoes") {
 TEST_CASE("Move generation valid-actions: only the first bug of a kind can be placed") {
     Board board{Variant::MLP};
     play_legal_move(board, "wS1");
-    const std::vector<Action> actions = validactions(board);
+    const std::vector<Action> actions = get_valid_actions(board);
     CHECK(actions.size() == 42);
     CHECK(std::count_if(actions.begin(), actions.end(),
                         [](const Action& a) { return a.kind == ActionKind::Placement; }) == 42);
@@ -547,12 +547,12 @@ TEST_CASE(
     "Move generation valid-actions: the tile moved by the pillbug cannot be moved the next turn") {
     Board board{Variant::MLP};
 
-    const int bQ_loc  = MID - 1;
+    const int bQ_loc = MID - 1;
     const int wG1_loc = apply_direction(bQ_loc, Direction::SW);
     const int wB1_loc = apply_direction(wG1_loc, Direction::SE);
     const int bA1_loc = apply_direction(wB1_loc, Direction::SE);
     const int bB1_loc = apply_direction(bA1_loc, Direction::NE);
-    const int wQ_loc  = apply_direction(bB1_loc, Direction::NE);
+    const int wQ_loc = apply_direction(bB1_loc, Direction::NE);
 
     put(board, bQ_loc, Color::Black, Bug::QUEEN);
     put(board, wQ_loc, Color::White, Bug::QUEEN);
@@ -561,8 +561,8 @@ TEST_CASE(
     put(board, bB1_loc, Color::Black, Bug::BEETLE);
     put(board, bA1_loc, Color::Black, Bug::ANT);
 
-    board.just_moved_loc              = bA1_loc;
-    const std::vector<Action> actions = validactions(board);
+    board.just_moved_loc = bA1_loc;
+    const std::vector<Action> actions = get_valid_actions(board);
     const size_t moved_piece_moves =
         static_cast<size_t>(std::count_if(actions.begin(), actions.end(), [&](const Action& a) {
             return (a.kind == ActionKind::Move || a.kind == ActionKind::Climb) && a.from == bA1_loc;
@@ -673,7 +673,7 @@ TEST_CASE(
     for (const std::string& move : seq)
         play_legal_move(board, move);
 
-    const std::vector<Action> actions = validactions(board);
+    const std::vector<Action> actions = get_valid_actions(board);
     CHECK(!actions.empty());
 }
 

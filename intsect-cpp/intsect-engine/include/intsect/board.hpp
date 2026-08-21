@@ -1,16 +1,13 @@
 #pragma once
 
-#include "intsect/hex_set.hpp"
-#include "intsect/tile.hpp"
-#include "intsect/types.hpp"
+#include "hex_set.hpp"
+#include "tile.hpp"
+#include "types.hpp"
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
-#include <type_traits>
-#include <utility>
 
 namespace intsect {
 
@@ -18,9 +15,9 @@ enum class ActionKind : uint8_t { Move, Climb, Placement, Pass };
 
 struct Action {
     ActionKind kind = ActionKind::Pass;
-    int from        = INVALID_LOC;
-    int to          = INVALID_LOC;
-    uint8_t tile    = 0;
+    int from = INVALID_LOC;
+    int to = INVALID_LOC;
+    uint8_t tile = 0;
 
     [[nodiscard]] static Action make_move(int from, int to) noexcept {
         return {ActionKind::Move, from, to, 0};
@@ -41,9 +38,9 @@ struct Action {
 inline constexpr int HISTORY_BUFFER_SIZE = 600;
 inline constexpr int MAX_UNDERWORLD_DEPTH =
     4; // max pieces that can be under a single tile (2B+M+L)
-inline constexpr size_t MOVE_STORE_SIZE   = 4096;
+inline constexpr size_t MOVE_STORE_SIZE = 4096;
 inline constexpr size_t PINNED_STORE_SIZE = 4096;
-inline constexpr size_t MOVE_STORE_MASK   = MOVE_STORE_SIZE - 1;
+inline constexpr size_t MOVE_STORE_MASK = MOVE_STORE_SIZE - 1;
 inline constexpr size_t PINNED_STORE_MASK = PINNED_STORE_SIZE - 1;
 
 struct MoveStoreEntry {
@@ -94,8 +91,8 @@ inline constexpr bool variant_has_pillbug(Variant variant) noexcept {
 }
 
 inline constexpr bool is_valid_shifted_tile(uint8_t shifted_tile) noexcept {
-    const uint8_t tile   = static_cast<uint8_t>(shifted_tile << INDEX_SHIFT);
-    const Bug bug        = get_tile_bug(tile);
+    const uint8_t tile = static_cast<uint8_t>(shifted_tile << INDEX_SHIFT);
+    const Bug bug = get_tile_bug(tile);
     const uint8_t bug_no = get_tile_bug_num(tile);
 
     if (bug == Bug::QUEEN || bug == Bug::LADYBUG || bug == Bug::MOSQUITO || bug == Bug::PILLBUG)
@@ -111,10 +108,10 @@ inline constexpr uint64_t piece_hash_value(uint8_t tile_without_height, int loc,
                                            int underworld_height) noexcept {
     // Julia indexes HASH_VALUES with [tile>>2 + height*36 + loc*36*7].
     const uint8_t shifted_tile = static_cast<uint8_t>(tile_without_height >> INDEX_SHIFT);
-    const int safe_height      = std::clamp(underworld_height, 0, 6);
-    const uint64_t seed        = static_cast<uint64_t>(shifted_tile) +
-                                 static_cast<uint64_t>(safe_height) * 36ull +
-                                 static_cast<uint64_t>(loc) * 36ull * 7ull;
+    const int safe_height = std::clamp(underworld_height, 0, 6);
+    const uint64_t seed = static_cast<uint64_t>(shifted_tile) +
+                          static_cast<uint64_t>(safe_height) * 36ull +
+                          static_cast<uint64_t>(loc) * 36ull * 7ull;
     return split_mix64(seed);
 }
 
@@ -136,13 +133,13 @@ struct Board {
     std::array<uint8_t, GRID_SIZE> tiles{};
     std::array<int, 36> tile_locs{};
 
-    int just_moved_loc  = INVALID_LOC;
+    int just_moved_loc = INVALID_LOC;
     Color current_color = Color::White;
     std::array<bool, 2> queen_placed{false, false};
-    uint16_t ply  = 1;
-    int turn      = 1;
+    uint16_t ply = 1;
+    int turn = 1;
     bool gameover = false;
-    Color victor  = Color::None;
+    Color victor = Color::None;
 
     std::array<Action, HISTORY_BUFFER_SIZE> history{};
     std::array<uint64_t, HISTORY_BUFFER_SIZE> hash_history{};
@@ -158,7 +155,7 @@ struct Board {
     int queen_pos_white = NOT_PLACED;
     int queen_pos_black = NOT_PLACED;
 
-    uint64_t hash          = 0;
+    uint64_t hash = 0;
     uint64_t location_hash = 0;
 
     std::array<MoveStoreEntry, MOVE_STORE_SIZE> move_store{};
@@ -275,8 +272,8 @@ struct Board {
         if (ply == 1)
             return false;
 
-        const Action action                         = history[static_cast<size_t>(ply) - 2u];
-        history[static_cast<size_t>(ply) - 2u]      = Action{};
+        const Action action = history[static_cast<size_t>(ply) - 2u];
+        history[static_cast<size_t>(ply) - 2u] = Action{};
         hash_history[static_cast<size_t>(ply) - 2u] = 0;
 
         switch (action.kind) {
@@ -300,7 +297,7 @@ struct Board {
 
         // check_gameover recomputes queen_pos_white/black from restored tile locations.
         gameover = false;
-        victor   = Color::None;
+        victor = Color::None;
         check_gameover(true);
 
         recompute_piece_sets();
@@ -368,10 +365,10 @@ struct Board {
         if (!is_valid_loc(action.from) || !is_valid_loc(action.to))
             return false;
 
-        const size_t idx_from       = static_cast<size_t>(action.from);
-        const size_t idx_to         = static_cast<size_t>(action.to);
+        const size_t idx_from = static_cast<size_t>(action.from);
+        const size_t idx_to = static_cast<size_t>(action.to);
         const uint8_t burrowed_tile = get_tile_on_board(action.to);
-        uint8_t moving_tile         = get_tile_on_board(action.from);
+        uint8_t moving_tile = get_tile_on_board(action.from);
         if (moving_tile == EMPTY_TILE)
             return false;
 
@@ -410,7 +407,7 @@ struct Board {
         set_loc(action.tile, NOT_PLACED);
 
         if (get_tile_bug(action.tile) == Bug::QUEEN) {
-            const Color tile_color                = get_tile_color(action.tile);
+            const Color tile_color = get_tile_color(action.tile);
             queen_placed[color_index(tile_color)] = false;
         }
 
@@ -428,10 +425,10 @@ struct Board {
     }
 
     void undo_climb(const Action& action) {
-        const size_t idx_from       = static_cast<size_t>(action.from);
-        const size_t idx_to         = static_cast<size_t>(action.to);
+        const size_t idx_from = static_cast<size_t>(action.from);
+        const size_t idx_to = static_cast<size_t>(action.to);
         const uint8_t burrowed_tile = get_tile_on_board(action.from);
-        uint8_t moving_tile         = get_tile_on_board(action.to);
+        uint8_t moving_tile = get_tile_on_board(action.to);
 
         if (burrowed_tile != EMPTY_TILE) {
             underworld[idx_from][underworld_sizes[idx_from]++] = burrowed_tile;
@@ -492,14 +489,14 @@ struct Board {
 
     void check_draw() {
         const uint64_t h = full_hash();
-        int count        = 0;
+        int count = 0;
         for (int i = static_cast<int>(ply) - 2; i >= 0; i -= 2) {
             if (hash_history[static_cast<size_t>(i)] == h)
                 ++count;
         }
         if (count >= 3) {
             gameover = true;
-            victor   = Color::Draw;
+            victor = Color::Draw;
         }
     }
 
@@ -525,11 +522,11 @@ struct Board {
         }
         if (wq_loc >= 0 && surrounded(wq_loc)) {
             gameover = true;
-            victor   = Color::Black;
+            victor = Color::Black;
         }
         if (bq_loc >= 0 && surrounded(bq_loc)) {
             gameover = true;
-            victor   = Color::White;
+            victor = Color::White;
         }
     }
 
@@ -557,7 +554,7 @@ struct Board {
     }
 
     void recompute_hashes() noexcept {
-        hash          = 0;
+        hash = 0;
         location_hash = 0;
         for (int loc = 0; loc < GRID_SIZE; ++loc) {
             const uint8_t tile = get_tile_on_board(loc);

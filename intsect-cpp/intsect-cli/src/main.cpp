@@ -2,14 +2,13 @@
 // https://github.com/jonthysell/Mzinga/wiki/UniversalHiveProtocol
 
 #include "intsect/board.hpp"
+#include "intsect/board_visualization.hpp"
 #include "intsect/game_string.hpp"
 #include "intsect/move_generation.hpp"
 #include "intsect/tile.hpp"
 #include "intsect/types.hpp"
 #include "intsect/version.hpp"
 
-#include <array>
-#include <iomanip>
 #include <iostream>
 #include <optional>
 #include <sstream>
@@ -22,11 +21,7 @@ using intsect::Action;
 using intsect::Board;
 using intsect::Bug;
 using intsect::Color;
-using intsect::EMPTY_TILE;
-using intsect::get_tile_height;
-using intsect::GRID_SIZE;
 using intsect::ROW_SIZE;
-using intsect::tile_name;
 using intsect::Variant;
 
 // ---- Engine state ----
@@ -53,96 +48,11 @@ struct EngineState {
 
 // ---- Board visualization ----
 
-std::string lpad(const std::string& s, int width) {
-    if (static_cast<int>(s.size()) >= width)
-        return s.substr(0, static_cast<size_t>(width));
-    return std::string(static_cast<size_t>(width - static_cast<int>(s.size())), ' ') + s;
-}
-
-void print_board_visual(const Board& board) {
-    // Hex grid.  Row 0 has the most indent (2*(ROW_SIZE-1) spaces); row ROW_SIZE-1 has none.
-    for (int row = 0; row < ROW_SIZE; ++row) {
-        const int indent = 2 * (ROW_SIZE - 1 - row);
-        for (int i = 0; i < indent; ++i)
-            std::cout << ' ';
-
-        for (int col = 0; col < ROW_SIZE; ++col) {
-            const int loc      = row * ROW_SIZE + col;
-            const uint8_t tile = board.get_tile_on_board(loc);
-
-            std::string cell;
-            if (tile != EMPTY_TILE) {
-                cell = tile_name(tile);
-                if (cell.size() == 2)
-                    cell += ' '; // pad 2-char names ("wQ ") to 3 chars
-            } else {
-                cell = "\033[2m" + lpad(std::to_string(loc), 3) + "\033[0m";
-            }
-            std::cout << cell << ' ';
-        }
-        std::cout << '\n';
-    }
-
-    // Piece location table.
-    std::cout << '\n';
-    constexpr std::array<Bug, 8> BUG_ORDER    = {Bug::ANT,     Bug::GRASSHOPPER, Bug::BEETLE,
-                                                 Bug::SPIDER,  Bug::QUEEN,       Bug::LADYBUG,
-                                                 Bug::PILLBUG, Bug::MOSQUITO};
-    constexpr std::array<uint8_t, 8> MAX_NUMS = {2, 2, 1, 1, 0, 0, 0, 0};
-
-    for (size_t bi = 0; bi < BUG_ORDER.size(); ++bi) {
-        const Bug bug         = BUG_ORDER[bi];
-        const uint8_t max_num = MAX_NUMS[bi];
-
-        for (uint8_t num = 0; num <= max_num; ++num) {
-            const uint8_t wtile = intsect::tile_from_info(Color::White, bug, num);
-            const uint8_t btile = intsect::tile_from_info(Color::Black, bug, num);
-            const int wloc      = board.get_loc(wtile);
-            const int bloc      = board.get_loc(btile);
-
-            auto format_loc = [&](int loc, uint8_t base_tile) -> std::string {
-                if (loc == intsect::NOT_PLACED || loc == intsect::INVALID_LOC)
-                    return "";
-                if (loc == intsect::UNDERGROUND) {
-                    for (int l = 0; l < GRID_SIZE; ++l) {
-                        for (const uint8_t t : board.underworld[static_cast<size_t>(l)]) {
-                            if ((t & ~intsect::HEIGHT_MASK) == (base_tile & ~intsect::HEIGHT_MASK))
-                                return std::to_string(l) + "(under)";
-                        }
-                    }
-                    return "underground";
-                }
-                const uint8_t h = get_tile_height(board.get_tile_on_board(loc));
-                return (h > 1) ? std::to_string(loc) + "^" + std::to_string(h)
-                               : std::to_string(loc);
-            };
-
-            const bool w_placed = wloc > intsect::NOT_PLACED || wloc == intsect::UNDERGROUND;
-            const bool b_placed = bloc > intsect::NOT_PLACED || bloc == intsect::UNDERGROUND;
-
-            if (!w_placed && !b_placed)
-                continue;
-
-            const std::string wpart =
-                w_placed ? (tile_name(wtile) + " : " + format_loc(wloc, wtile)) : "";
-            const std::string bpart =
-                b_placed ? (tile_name(btile) + " : " + format_loc(bloc, btile)) : "";
-
-            if (!wpart.empty() && !bpart.empty())
-                std::cout << std::left << std::setw(20) << wpart << bpart << '\n';
-            else if (!wpart.empty())
-                std::cout << wpart << '\n';
-            else
-                std::cout << std::string(20, ' ') << bpart << '\n';
-        }
-    }
-}
-
 void show_board(const EngineState& state) {
     std::cout << "----------------------------------\n";
     std::cout << state.game_string() << '\n';
     std::cout << "----------------------------------\n";
-    print_board_visual(*state.board);
+    intsect::print_board_visual(*state.board);
     std::cout << "----------------------------------\n";
 }
 
@@ -170,7 +80,8 @@ void cmd_newgame(EngineState& state, const std::string& param) {
         return;
     }
 
-    // Full GameString: split on ';', parse variant, skip state/turn, replay moves.
+    // Full GameString: split on ';', parse variant, skip state/turn, replay
+    // moves.
     std::vector<std::string> parts;
     {
         std::istringstream iss(param);
@@ -254,8 +165,8 @@ void cmd_undo(EngineState& state, int count) {
 }
 
 void cmd_validmoves(EngineState& state) {
-    std::vector<Action> actions = validactions(*state.board);
-    bool first                  = true;
+    std::vector<Action> actions = get_valid_actions(*state.board);
+    bool first = true;
     for (const Action& action : actions) {
         if (!first)
             std::cout << ';';
@@ -280,7 +191,8 @@ bool require_game(const EngineState& state) {
 int main() {
     EngineState state; // no active game until newgame is called
 
-    // UHP: print info automatically on startup so the viewer knows the engine is ready.
+    // UHP: print info automatically on startup so the viewer knows the engine
+    // is ready.
     cmd_info();
 
     std::string line;
@@ -335,9 +247,9 @@ int main() {
         } else if (cmd == "quit" || cmd == "exit") {
             break;
         } else {
-            std::cout
-                << "err Invalid command: " << cmd
-                << ". Valid: info newgame play pass validmoves bestmove undo options show quit\n";
+            std::cout << "err Invalid command: " << cmd
+                      << ". Valid: info newgame play pass validmoves bestmove undo "
+                         "options show quit\n";
             std::cout << "ok\n";
         }
     }

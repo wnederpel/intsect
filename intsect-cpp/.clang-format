@@ -1,10 +1,10 @@
+TabWidth: 4
 BasedOnStyle: LLVM
 Language: Cpp
 Standard: c++20
 
 UseTab: Never
 IndentWidth: 4
-TabWidth: 4
 ColumnLimit: 100
 
 BreakBeforeBraces: Attach
@@ -20,7 +20,5 @@ NamespaceIndentation: None
 SortIncludes: true
 IncludeBlocks: Regroup
 
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: false
 ReflowComments: true
 SpaceBeforeParens: ControlStatements

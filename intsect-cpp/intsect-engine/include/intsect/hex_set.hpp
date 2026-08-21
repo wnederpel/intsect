@@ -1,9 +1,8 @@
 #pragma once
 
-#include "intsect/types.hpp"
+#include "types.hpp"
 
 #include <array>
-#include <bit>
 #include <cstdint>
 
 namespace intsect {
